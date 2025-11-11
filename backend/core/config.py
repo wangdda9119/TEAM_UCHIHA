@@ -8,13 +8,13 @@ class Settings(BaseSettings):
     app_port: int = 8000
     log_level: str = "INFO"
 
-    secret_key: str = "change-this-in-production"
+    secret_key: str = "uchiha-secret-key"
 
-    db_host: str = "localhost"
+    db_host: str = "uchiha_container"
     db_port: int = 5433
-    db_name: str = "aiapp"
-    db_user: str = "aiuser"
-    db_password: str = "aiuserpw"
+    db_name: str = "uchiha_db"
+    db_user: str = "uchiha_itachi"
+    db_password: str = "sharingan"
 
     openai_api_key: str | None = None
 

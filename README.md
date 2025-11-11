@@ -1,53 +1,55 @@
 루트
-├─ docker-compose.yml            ← Postgres(+pgvector)만 도커로 실행
-├─ .env                          ← 환경변수 (예: DB_HOST, OPENAI_API_KEY)
+├─ docker-compose.yml            ← Postgres 도커로 실행
+├─ .env                          ← 환경변수 (DB_HOST, OPENAI_API_KEY 등)
+├─ LCEL_GUIDE.md                 ← LCEL 체인 상세 가이드
+├─ STT_TTS_GUIDE.md              ← STT/TTS 음성 기능 가이드
 └─ backend
    ├─ app/main.py                ← FastAPI 시작점(+ 라우터 등록)
    ├─ api/v1/router.py           ← /api/v1 하위 라우터 묶음
-   │  ├─ routes/ai.py            ← /ai/ask, /ai/agent 엔드포인트
-   │  ├─ routes/stt.py           ← /stt/transcribe (STT)
-   │  └─ routes/tts.py           ← /tts/synthesize (TTS)
+   │  ├─ routes/ai.py            ← /ai/* 엔드포인트
+   │  ├─ routes/stt_tts.py       ← /speech/* 음성 엔드포인트
+   │  └─ routes/lcel.py          ← /lcel/* LCEL 체인 엔드포인트
    ├─ core/config.py             ← .env 읽어서 설정 제공(DB URI 등)
-   ├─ core/logging.py            ← loguru 로깅 설정(콘솔+파일)
-   ├─ db/session.py              ← SQLAlchemy 엔진/세션 주입(get_db)
-   ├─ db/models.py               ← 예시 모델(Document)
-   ├─ ai/chains/lcel_chain.py    ← LCEL 체인(간단 Q→A)
-   ├─ ai/graph/agent_graph.py    ← LangGraph 에이전트(툴 호출 지점)
-   ├─ ai/tools/search/web_search.py ← 예시 툴(웹검색 자리에 대체)
-   └─ ai/vector/faiss_store.py   ← FAISS 인덱스 헬퍼(add/search/save/load)
+   ├─ core/logging.py            ← loguru 로깅 설정
+   ├─ core/env_setup.py          ← 환경 변수 초기화 (모듈화)
+   ├─ db/session.py              ← SQLAlchemy 엔진/세션
+   ├─ db/models.py               ← 데이터베이스 모델
+   ├─ services/stt.py            ← OpenAI Whisper STT 서비스
+   ├─ services/tts.py            ← OpenAI TTS 서비스
+   ├─ ai/chains/lcel_chain.py    ← 모듈화된 LCEL 체인 (11개)
+   ├─ ai/graph/agent_graph.py    ← LangGraph 에이전트
+   ├─ ai/tools/search/web_search.py ← 검색 도구
+   └─ ai/vector/faiss_store.py   ← FAISS 벡터 스토어
 
 
-요청 → FastAPI → 라우터 → (도메인 로직) → 응답
+## 📡 API 엔드포인트
 
-1) 헬스체크
-   GET /health
-   app/main.py (직접 응답)
+### 1. LCEL 체인 엔드포인트 (11개 체인)
+```
+POST /api/v1/lcel/qa              ← 질문-답변
+POST /api/v1/lcel/summarize       ← 텍스트 요약
+POST /api/v1/lcel/sentiment       ← 감정 분석
+POST /api/v1/lcel/keywords        ← 키워드 추출
+POST /api/v1/lcel/generate-questions ← 질문 생성
+POST /api/v1/lcel/context-qa      ← 컨텍스트 기반 QA
+POST /api/v1/lcel/analyze         ← 병렬 분석 (요약+감정+키워드)
+POST /api/v1/lcel/verify          ← 사실성 검증
+GET  /api/v1/lcel/chains          ← 사용 가능한 체인 목록
+GET  /api/v1/lcel/health          ← 헬스 체크
+```
 
-2) 단순 체인(LCEL)
-   POST /api/v1/ai/ask
-      → routes/ai.py: ask_lcel()
-         → ai/chains/lcel_chain.get_simple_chain()
-            → RunnableLambda(_answer_fn)  ← (여기에 나중에 RAG/리트리버 연결)
-         ← answer 문자열
-      ← {"answer": ...}
+### 2. STT/TTS 음성 엔드포인트
+```
+POST /api/v1/speech/transcribe    ← 음성 인식 (Whisper)
+POST /api/v1/speech/synthesize    ← 음성 합성 (TTS)
+GET  /api/v1/speech/health        ← 헬스 체크
+```
 
-3) 에이전트(Graph)
-   POST /api/v1/ai/agent
-      → routes/ai.py: ask_agent()
-         → ai/graph/agent_graph.get_agent_app()
-            → LangGraph(StateGraph)
-               → agent_node() 에서 mock_search_tool() 호출
-                  → ai/tools/search/web_search.web_search() (예시 툴)
-         ← state {"question","answer"}
-      ← {"result": ...}
-
-4) STT
-   POST /api/v1/stt/transcribe (파일 업로드)
-      → routes/stt.py: STTService.transcribe(data)  ← (여기에 Whisper/클라우드 STT 연결)
-      ← {"text": ...}
-
-5) TTS
-   POST /api/v1/tts/synthesize
+### 3. AI 에이전트 엔드포인트
+```
+POST /api/v1/ai/ask               ← LCEL 체인
+POST /api/v1/ai/agent             ← LangGraph 에이전트
+```
       → routes/tts.py: TTSService.synthesize(text)  ← (여기에 Azure/OPENAI TTS 연결)
       ← {"bytes": ...}
 

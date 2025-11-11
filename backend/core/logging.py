@@ -11,7 +11,7 @@ def setup_logging() -> None:
     logger.add(
         log_dir / f"{settings.app_env}.log",
         rotation="10 MB",
-        retention="10 files",
+        retention=10,
         level=settings.log_level,
         enqueue=True,
     )
