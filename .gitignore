@@ -1,0 +1,31 @@
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+.env
+.env.*.local
+.DS_Store
+
+# Editor/OS
+.idea/
+.vscode/
+Thumbs.db
+
+# Logs & data
+logs/
+data/
+vectorstore/
+uploads/
+
+# Node (in case you add FE later)
+node_modules/
+dist/
+
+# Docker
+*.pid
+.docker/

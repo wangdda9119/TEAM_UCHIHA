@@ -1,0 +1,21 @@
+
+services:
+  db:
+    image: ankane/pgvector:latest
+    container_name: ai_pgvector
+    environment:
+      POSTGRES_USER: aiuser
+      POSTGRES_PASSWORD: aiuserpw
+      POSTGRES_DB: aiapp
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./docker/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aiuser -d aiapp"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+volumes:
+  db_data:
