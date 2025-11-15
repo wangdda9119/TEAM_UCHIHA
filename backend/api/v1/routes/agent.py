@@ -234,16 +234,20 @@ async def clear_agent_memory():
 async def list_tools():
     """
     사용 가능한 도구 목록 조회
+    
+    모든 @tool 데코레이터 기반 도구를 반환합니다:
+    - 기본 도구: web_search, calculator
+    - 고급 도구: json_parser, text_summarizer, string_manipulator, get_current_time, list_operations
     """
     try:
-        from backend.ai.tools.tools import TOOLS
+        from backend.ai.tools import ALL_TOOLS
         
         tools_info = []
-        for tool in TOOLS:
+        for tool in ALL_TOOLS:
             tools_info.append({
+                "tool_id": tool.name,
                 "name": tool.name,
-                "description": tool.description,
-                "tool_id": tool.name
+                "description": tool.description or "설명 없음"
             })
         
         return {
@@ -267,19 +271,23 @@ async def list_tools():
 async def health_check():
     """
     React AI Agent 서비스 헬스 체크
+    
+    서비스 상태와 사용 가능한 도구 정보를 반환합니다.
     """
     try:
-        from backend.ai.tools.tools import TOOLS
+        from backend.ai.tools import ALL_TOOLS
         
         agent = get_react_agent()
         
         return {
             "status": "ok",
-            "service": "React AI Agent (AgentExecutor)",
-            "available_tools": len(TOOLS),
-            "memory_size": len(agent.get_memory())
+            "service": "React AI Agent",
+            "available_tools": len(ALL_TOOLS),
+            "memory_size": len(agent.get_memory()),
+            "tools": [tool.name for tool in ALL_TOOLS]
         }
     except Exception as e:
+        logger.error(f"❌ 헬스 체크 오류: {str(e)}")
         return {
             "status": "error",
             "service": "React AI Agent",

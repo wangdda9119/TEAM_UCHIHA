@@ -1,4 +1,3 @@
-
 fastapi>=0.115
 uvicorn[standard]>=0.30
 pydantic>=2.9
@@ -9,13 +8,13 @@ alembic>=1.13
 
 python-dotenv>=1.0
 loguru>=0.7
-numpy>=2.1
+numpy==1.26.4
 httpx>=0.27.0
 
 # AI stack - pinned for compatibility
 # Upgraded to versions known to work with current codebase
 langchain==0.3.12
-langchain-core==0.3.5
+langchain-core
 langchain-openai==0.2.0
 langgraph==0.2.50
 faiss-cpu>=1.8.0

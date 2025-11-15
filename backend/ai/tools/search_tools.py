@@ -1,15 +1,12 @@
 """
-AI 에이전트용 도구 (Tools)
-최신 LangChain @tool 데코레이터 (v0.1+) 사용
-- Pydantic v2 호환
-- 타입 힌트 기반 자동 스키마 생성
+검색 도구 (Search Tools)
+웹 검색 및 정보 수집
 """
 
 from langchain_core.tools import tool
 from loguru import logger
 import os
 import httpx
-from typing import Optional
 from pydantic import Field
 
 
@@ -72,53 +69,9 @@ def web_search(
 
 
 # ============================================================================
-# 계산기 도구
+# 검색 도구 목록
 # ============================================================================
 
-@tool
-def calculator(
-    expression: str = Field(..., description="계산식 (예: '2 + 3 * 4', 'sin(3.14)')")
-) -> str:
-    """
-    수학 연산을 수행하고 결과를 반환합니다.
-    
-    지원되는 연산:
-    - 기본 산술: +, -, *, /, **, //
-    - 함수: abs(), round(), max(), min(), sum(), pow()
-    - 상수: pi, e (math 모듈)
-    
-    보안: 미리 정의된 함수만 실행 가능합니다.
-    """
-    try:
-        logger.info(f"🧮 계산: {expression}")
-        
-        # 안전한 평가: 수학 함수만 허용
-        allowed_names = {
-            '__builtins__': {},
-            'abs': abs,
-            'round': round,
-            'max': max,
-            'min': min,
-            'sum': sum,
-            'pow': pow,
-        }
-        
-        result = eval(expression, allowed_names)
-        logger.info(f"✅ 계산 결과: {result}")
-        return str(result)
-    
-    except ZeroDivisionError:
-        return "❌ 오류: 0으로 나눌 수 없습니다."
-    except SyntaxError:
-        return f"❌ 문법 오류: '{expression}'는 올바른 수식이 아닙니다."
-    except Exception as e:
-        return f"❌ 계산 오류: {str(e)}"
+SEARCH_TOOLS = [web_search]
 
-
-# ============================================================================
-# 도구 목록 (ReActAgent에 전달용)
-# ============================================================================
-
-TOOLS = [web_search, calculator]
-
-__all__ = ["web_search", "calculator", "TOOLS"]
+__all__ = ["web_search", "SEARCH_TOOLS"]
