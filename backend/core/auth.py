@@ -7,8 +7,8 @@ from passlib.context import CryptContext
 from backend.core.config import settings
 from backend.core.redis_client import get_redis
 
-# 비밀번호 해싱 - scrypt 사용 (길이 제한 없음)
-pwd_context = CryptContext(schemes=["scrypt"], deprecated="auto")
+# 비밀번호 해싱 - pbkdf2_sha256 사용 (길이 제한 없음)
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 # JWT 설정
 SECRET_KEY = settings.secret_key
@@ -20,11 +20,6 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 def get_password_hash(password: str) -> str:
-    # bcrypt는 72바이트 제한 - 바이트 단위로 자르기
-    password_bytes = password.encode('utf-8')
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-        password = password_bytes.decode('utf-8', errors='ignore')
     return pwd_context.hash(password)
 
 def create_access_token(data: dict) -> str:

@@ -10,8 +10,8 @@ class Settings(BaseSettings):
 
     secret_key: str = "uchiha-secret-key"
 
-    db_host: str = "uchiha_container"
-    db_port: int = 5433
+    db_host: str = "localhost"
+    db_port: int = 5434
     db_name: str = "uchiha_db"
     db_user: str = "uchiha_itachi"
     db_password: str = "sharingan"

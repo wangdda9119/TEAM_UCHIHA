@@ -26,9 +26,13 @@ python-multipart>=0.0.9
 beautifulsoup4
 tavily-python
 pypdf
+pandas>=2.0.0
+openpyxl>=3.1.0
 
 # Authentication
 redis>=5.0.1
 python-jose[cryptography]>=3.3.0
-passlib[bcrypt]>=1.7.4
+passlib>=1.7.4
 pydantic[email]
+pandas
+openpyxl

@@ -8,7 +8,9 @@
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: #2c3e50;
+  background: linear-gradient(135deg, #f8fdff 0%, #e8f4fd 100%);
+  min-height: 100vh;
 }
 
 .app-container {
@@ -19,76 +21,131 @@ body {
 /* 네비게이션 바 */
 .nav-bar {
   display: flex;
-  gap: 10px;
-  padding: 20px;
-  background: #f8f9fa;
-  border-bottom: 1px solid #dee2e6;
+  gap: 15px;
+  padding: 20px 30px;
+  background: rgba(255, 255, 255, 0.95);
+  border-bottom: 2px solid #87ceeb;
+  box-shadow: 0 2px 10px rgba(135, 206, 235, 0.1);
+  backdrop-filter: blur(10px);
 }
 
 .nav-btn {
-  padding: 10px 20px;
-  background: #007bff;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #87ceeb 0%, #5dade2 100%);
   color: white;
   text-decoration: none;
-  border-radius: 6px;
+  border-radius: 25px;
   font-weight: 600;
   transition: all 0.3s ease;
+  border: 2px solid transparent;
+  box-shadow: 0 4px 15px rgba(135, 206, 235, 0.3);
 }
 
 .nav-btn:hover {
-  background: #0056b3;
-  transform: translateY(-2px);
+  background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(135, 206, 235, 0.4);
 }
 
 .nav-btn.router-link-active {
-  background: #28a745;
+  background: linear-gradient(135deg, #ffffff 0%, #f0f8ff 100%);
+  color: #2980b9;
+  border: 2px solid #87ceeb;
+  box-shadow: 0 4px 15px rgba(135, 206, 235, 0.2);
 }
 
 /* 공통 버튼 스타일 */
 .btn {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 5px;
+  padding: 12px 24px;
+  border: 2px solid transparent;
+  border-radius: 20px;
   cursor: pointer;
   font-size: 16px;
+  font-weight: 600;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(135, 206, 235, 0.2);
 }
 
 .btn:disabled {
-  background: #ccc;
+  background: #e8f4fd;
+  color: #a0c4e0;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .btn-primary {
-  background: #007bff;
+  background: linear-gradient(135deg, #87ceeb 0%, #5dade2 100%);
   color: white;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #0056b3;
+  background: linear-gradient(135deg, #5dade2 0%, #3498db 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(135, 206, 235, 0.4);
 }
 
 .btn-success {
-  background: #28a745;
+  background: linear-gradient(135deg, #7dd3fc 0%, #0ea5e9 100%);
   color: white;
 }
 
 .btn-success:hover:not(:disabled) {
-  background: #218838;
+  background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
 }
 
 /* 공통 카드 스타일 */
 .card {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  margin: 10px 0;
+  background: rgba(255, 255, 255, 0.95);
+  padding: 30px;
+  border-radius: 20px;
+  border: 2px solid #e0f2fe;
+  box-shadow: 0 8px 32px rgba(135, 206, 235, 0.15);
+  margin: 20px 0;
+  backdrop-filter: blur(10px);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(135, 206, 235, 0.2);
+  border-color: #87ceeb;
 }
 
 /* 공통 컨테이너 */
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
+}
+
+/* 공통 입력 필드 스타일 */
+input[type="text"], input[type="number"], input[type="file"], textarea, select {
+  padding: 12px 16px;
+  border: 2px solid #e0f2fe;
+  border-radius: 15px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2c3e50;
+}
+
+input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: #87ceeb;
+  box-shadow: 0 0 0 3px rgba(135, 206, 235, 0.1);
+  background: white;
+}
+
+/* 공통 제목 스타일 */
+h1, h2, h3, h4 {
+  color: #2980b9;
+  margin-bottom: 20px;
+}
+
+h2 {
+  font-size: 2.2em;
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
 }

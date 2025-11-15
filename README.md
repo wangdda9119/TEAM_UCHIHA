@@ -45,7 +45,14 @@ POST /api/v1/speech/synthesize    ← 음성 합성 (TTS)
 GET  /api/v1/speech/health        ← 헬스 체크
 ```
 
-### 3. AI 에이전트 엔드포인트
+### 3. 인증 엔드포인트
+```
+POST /api/v1/auth/register        ← 회원가입
+POST /api/v1/auth/login           ← 로그인
+POST /api/v1/auth/logout          ← 로그아웃
+```
+
+### 4. AI 에이전트 엔드포인트
 ```
 POST /api/v1/ai/ask               ← LCEL 체인
 POST /api/v1/ai/agent             ← LangGraph 에이전트
@@ -131,14 +138,48 @@ POST /api/v1/ai/agent
 
 DB 세팅: backend/core/config.py, backend/db/session.py
 
-실행 순서(초단계)
+## 🔐 인증 시스템
 
-docker compose up -d (DB 준비)
+### 사용자 역할
+- **student**: 일반 학생 (AI 챗봇, PDF 학습 지원 이용 가능)
+- **professor**: 교수 (모든 기능 + 과제 자동 채점 이용 가능)
 
-pip install -r requirements.txt
+### 테스트 계정
+- 교수: `professor` / `prof123`
+- 학생: `student` / `stud123`
 
-cp .env.example .env 값 채우기
+## 🚀 실행 순서
 
-python backend/db/init_db.py (테이블 생성)
+1. **DB 준비**
+   ```bash
+   docker compose up -d
+   ```
 
-uvicorn backend.app.main:app --reload --port 8000
+2. **의존성 설치**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **환경변수 설정**
+   ```bash
+   cp .env.example .env
+   # .env 파일에서 필요한 값들 설정
+   ```
+
+4. **데이터베이스 초기화**
+   ```bash
+   python backend/db/init_db.py
+   python backend/db/create_test_users.py
+   ```
+
+5. **백엔드 서버 실행**
+   ```bash
+   uvicorn backend.app.main:app --reload --port 8000
+   ```
+
+6. **프론트엔드 실행**
+   ```bash
+   cd team_uchiha
+   npm install
+   npm run dev
+   ```

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 # 라우트 모듈 임포트
-from backend.api.v1.routes import ai, stt_tts, agent, auth, lecture
+from backend.api.v1.routes import ai, stt_tts, agent, auth, lecture, grading
 
 api_router = APIRouter()
 
@@ -19,3 +19,6 @@ api_router.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 # 강의 분석 엔드포인트
 api_router.include_router(lecture.router, prefix="/lecture", tags=["Lecture"])
+
+# 과제 채점 엔드포인트
+api_router.include_router(grading.router, prefix="/grading", tags=["Grading"])
