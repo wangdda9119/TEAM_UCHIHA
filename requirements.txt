@@ -13,12 +13,12 @@ httpx>=0.27.0
 
 # AI stack - pinned for compatibility
 # Upgraded to versions known to work with current codebase
-langchain==0.3.12
+langchain
 langchain-core
-langchain-openai==0.2.0
-langgraph==0.2.50
+langchain-openai
+langgraph
 faiss-cpu>=1.8.0
-openai>=1.51
+openai
 langchain-community
 
 # Optional: file parsing later
@@ -26,3 +26,9 @@ python-multipart>=0.0.9
 beautifulsoup4
 tavily-python
 pypdf
+
+# Authentication
+redis>=5.0.1
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+pydantic[email]
