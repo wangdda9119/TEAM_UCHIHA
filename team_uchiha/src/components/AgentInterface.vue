@@ -36,7 +36,7 @@
                 {{ formatTime(msg.timestamp) }}
               </span>
             </div>
-            <div class="message-content">{{ msg.content }}</div>
+            <div class="message-content" v-html="formatMessage(msg.content)"></div>
             <div v-if="msg.iterations !== undefined" class="message-meta">
               반복: {{ msg.iterations }}회
             </div>
@@ -400,6 +400,13 @@ export default {
           this.statusMessage = '';
         }, 4000);
       }
+    },
+
+    /**
+     * 메시지 포맷 (줄바꿈 처리)
+     */
+    formatMessage(content) {
+      return content.replace(/\n/g, '<br>');
     },
 
     /**

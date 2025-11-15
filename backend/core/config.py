@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     db_password: str = "sharingan"
 
     openai_api_key: str | None = None
+    tavily_api_key: str | None = None
 
     vector_dir: str = "vectorstore"
     upload_dir: str = "uploads"

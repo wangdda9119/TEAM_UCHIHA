@@ -11,6 +11,7 @@ setup_environment()
 from backend.core.config import settings
 from backend.core.logging import setup_logging
 from backend.api.v1.router import api_router
+from backend.ai.vector.rag_pipeline import RAGPipeline
 
 app = FastAPI(title=settings.app_name)
 
@@ -29,6 +30,19 @@ app.add_middleware(
 )
 
 setup_logging()
+
+# 전역 RAG 파이프라인 초기화
+rag_pipeline = None
+
+@app.on_event("startup")
+async def startup_event():
+    global rag_pipeline
+    try:
+        rag_pipeline = RAGPipeline()
+        print("✅ RAG Pipeline 전역 로드 완료")
+    except Exception as e:
+        print(f"⚠️ RAG Pipeline 로드 실패: {e}")
+        rag_pipeline = None
 
 @app.get("/health")
 def health():
