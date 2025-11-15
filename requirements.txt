@@ -25,3 +25,4 @@ langchain-community
 python-multipart>=0.0.9
 beautifulsoup4
 tavily-python
+pypdf

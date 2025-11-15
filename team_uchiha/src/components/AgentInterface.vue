@@ -2,8 +2,18 @@
   <div class="agent-interface">
     <!-- Header -->
     <div class="header">
-      <h1>🤖 React AI Agent</h1>
-      <p class="subtitle">지능형 에이전트와 대화하세요</p>
+      <div class="header-content">
+        <div class="title-section">
+          <h1>🤖 React AI Agent</h1>
+          <p class="subtitle">지능형 에이전트와 대화하세요</p>
+        </div>
+        <div class="language-selector">
+          <select v-model="selectedLanguage" class="language-dropdown">
+            <option value="ko">🇰🇷 한국어</option>
+            <option value="en">🇺🇸 English</option>
+          </select>
+        </div>
+      </div>
     </div>
 
     <!-- Status Message -->
@@ -11,15 +21,14 @@
       {{ statusMessage }}
     </div>
 
-  <div class="container-fluid agent-container px-4">
-      <!-- Left Panel: Chat -->
-  <section class="chat-panel">
-        <div class="section-header">
-          <h2>💬 대화</h2>
-          <button @click="clearChat" class="btn btn-small btn-outline">
-            🗑️  초기화
-          </button>
-        </div>
+    <!-- Chat Panel -->
+    <div class="chat-container">
+      <div class="chat-header">
+        <h2>💬 대화</h2>
+        <button @click="clearChat" class="btn btn-small btn-outline">
+          🗑️ 초기화
+        </button>
+      </div>
 
         <!-- Chat Messages -->
         <div class="messages-container">
@@ -62,6 +71,22 @@
           ></textarea>
           <div class="input-controls">
             <button
+              @click="toggleRecording"
+              :disabled="isLoading"
+              :class="['btn', 'btn-voice', isRecording ? 'recording' : '']"
+            >
+              <span class="icon">{{ isRecording ? '⏹️' : '🎤' }}</span>
+              {{ isRecording ? '녹음 중지' : '음성 입력' }}
+            </button>
+            <button
+              @click="toggleSpeakMode"
+              :disabled="isLoading"
+              :class="['btn', 'btn-speak', speakMode ? 'active' : '']"
+            >
+              <span class="icon">{{ speakMode ? '🔊' : '🔇' }}</span>
+              {{ speakMode ? '말하기 ON' : '말하기 OFF' }}
+            </button>
+            <button
               @click="sendMessage"
               :disabled="!userInput.trim() || isLoading"
               class="btn btn-primary"
@@ -72,139 +97,6 @@
             <span class="char-count">{{ userInput.length }} / 2000</span>
           </div>
         </div>
-      </section>
-
-      <!-- Right Panel: Info & Tools -->
-  <section class="info-panel">
-        <!-- Tools Section -->
-        <div class="section-header">
-          <h3>🔧 사용 가능한 도구</h3>
-        </div>
-
-        <div class="tools-list">
-          <div
-            v-for="tool in availableTools"
-            :key="tool.tool_id"
-            class="tool-card"
-          >
-            <div class="tool-name">{{ tool.name }}</div>
-            <div class="tool-description">{{ tool.description }}</div>
-          </div>
-        </div>
-
-        <!-- Settings -->
-        <div class="section-header" style="margin-top: 20px">
-          <h3>⚙️ 설정</h3>
-        </div>
-
-        <div class="settings">
-          <div class="setting-item">
-            <label>최대 반복 횟수</label>
-            <input
-              v-model.number="maxIterations"
-              type="number"
-              min="1"
-              max="10"
-              :disabled="isLoading"
-              class="setting-input"
-            />
-          </div>
-
-          <div class="setting-item">
-            <label>메모리 크기</label>
-            <div class="memory-info">{{ memorySize }} 항목</div>
-            <button
-              @click="clearMemory"
-              :disabled="memorySize === 0 || isLoading"
-              class="btn btn-small btn-outline"
-            >
-              메모리 초기화
-            </button>
-          </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="section-header" style="margin-top: 20px">
-          <h3>⚡ 빠른 질문</h3>
-        </div>
-
-        <div class="quick-questions">
-          <button
-            v-for="(q, idx) in quickQuestions"
-            :key="idx"
-            @click="sendQuickQuestion(q)"
-            :disabled="isLoading"
-            class="btn btn-small btn-outline"
-          >
-            {{ q.emoji }} {{ q.text }}
-          </button>
-        </div>
-
-        <!-- Stats -->
-        <div class="section-header" style="margin-top: 20px">
-          <h3>📊 통계</h3>
-        </div>
-
-        <div class="stats">
-          <div class="stat-item">
-            <span class="stat-label">총 메시지</span>
-            <span class="stat-value">{{ messages.length }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">총 반복</span>
-            <span class="stat-value">{{ totalIterations }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">메모리 크기</span>
-            <span class="stat-value">{{ memorySize }}</span>
-          </div>
-        </div>
-      </section>
-    </div>
-
-    <!-- Memory Viewer Modal -->
-    <div v-if="showMemory" class="modal-overlay" @click="showMemory = false">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h2>📝 에이전트 메모리</h2>
-          <button @click="showMemory = false" class="close-btn">✕</button>
-        </div>
-
-        <div class="modal-content">
-          <div v-for="(item, idx) in memoryData" :key="idx" class="memory-item">
-            <div class="memory-type">
-              {{ item.type === 'agent_step' ? '💭' : '👁️' }}
-              {{ item.type === 'agent_step' ? '에이전트 단계' : '관찰' }}
-            </div>
-            <div class="memory-detail">
-              <small>반복: {{ item.iteration }}</small>
-              <div v-if="item.thought" class="memory-field">
-                <strong>생각:</strong> {{ item.thought }}
-              </div>
-              <div v-if="item.action" class="memory-field">
-                <strong>행동:</strong> {{ item.action }}
-              </div>
-              <div v-if="item.action_input" class="memory-field">
-                <strong>입력:</strong> {{ item.action_input }}
-              </div>
-              <div v-if="item.observation" class="memory-field">
-                <strong>관찰:</strong> {{ item.observation }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-  <!-- Footer -->
-    <div class="footer">
-      <p>💡 팁: 에이전트는 웹 검색과 계산 도구를 사용할 수 있습니다</p>
-      <button
-        @click="showMemory = true"
-        class="btn btn-small btn-outline"
-      >
-        📝 메모리 보기
-      </button>
     </div>
   </div>
 </template>
@@ -225,47 +117,20 @@ export default {
       memorySize: 0,
       memoryData: [],
       showMemory: false,
-      totalIterations: 0,
-      availableTools: [],
-      quickQuestions: [
-        {
-          emoji: '🌍',
-          text: '최신 AI 뉴스'
-        },
-        {
-          emoji: '🐍',
-          text: '파이썬 최신 버전'
-        },
-        {
-          emoji: '📊',
-          text: '2 + 2는?'
-        },
-        {
-          emoji: '🚀',
-          text: 'React 장점'
-        }
-      ]
+      isRecording: false,
+      mediaRecorder: null,
+      audioChunks: [],
+      selectedLanguage: 'ko',
+      speakMode: false
     };
   },
 
   mounted() {
-    this.loadTools();
     this.checkHealth();
   },
 
   methods: {
-    /**
-     * 도구 목록 로드
-     */
-    async loadTools() {
-      try {
-        const response = await fetch(`${API_BASE_URL}/tools`);
-        const data = await response.json();
-        this.availableTools = data.tools || [];
-      } catch (error) {
-        console.error('도구 목록 로드 실패:', error);
-      }
-    },
+
 
     /**
      * 헬스 체크
@@ -310,7 +175,8 @@ export default {
           },
           body: JSON.stringify({
             question: question,
-            max_iterations: this.maxIterations
+            session_id: 'default_session',
+            language: this.selectedLanguage
           })
         });
 
@@ -328,9 +194,10 @@ export default {
           timestamp: new Date()
         });
 
-        this.totalIterations += data.iterations;
-        this.memorySize = data.memory ? data.memory.length : 0;
-        this.memoryData = data.memory || [];
+        // 말하기 모드가 켜져 있으면 TTS 실행
+        if (this.speakMode) {
+          await this.speakText(data.answer);
+        }
 
         this.showStatus('✅ 처리 완료!', 'success');
 
@@ -353,38 +220,13 @@ export default {
       }
     },
 
-    /**
-     * 빠른 질문 전송
-     */
-    sendQuickQuestion(question) {
-      this.userInput = question.text;
-      this.$nextTick(() => this.sendMessage());
-    },
 
-    /**
-     * 메모리 초기화
-     */
-    async clearMemory() {
-      try {
-        await fetch(`${API_BASE_URL}/memory`, {
-          method: 'DELETE'
-        });
-
-        this.memorySize = 0;
-        this.memoryData = [];
-        this.totalIterations = 0;
-        this.showStatus('🗑️  메모리가 초기화되었습니다', 'success');
-      } catch (error) {
-        this.showStatus(`❌ 메모리 초기화 실패: ${error.message}`, 'error');
-      }
-    },
 
     /**
      * 대화 초기화
      */
     clearChat() {
       this.messages = [];
-      this.totalIterations = 0;
       this.showStatus('💬 대화가 초기화되었습니다', 'success');
     },
 
@@ -420,6 +262,136 @@ export default {
         hour: '2-digit',
         minute: '2-digit'
       });
+    },
+
+    /**
+     * 음성 녹음 토글
+     */
+    async toggleRecording() {
+      if (this.isRecording) {
+        this.stopRecording();
+      } else {
+        await this.startRecording();
+      }
+    },
+
+    /**
+     * 녹음 시작
+     */
+    async startRecording() {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        this.mediaRecorder = new MediaRecorder(stream);
+        this.audioChunks = [];
+
+        this.mediaRecorder.ondataavailable = (event) => {
+          this.audioChunks.push(event.data);
+        };
+
+        this.mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(this.audioChunks, { type: 'audio/wav' });
+          await this.transcribeAudio(audioBlob);
+        };
+
+        this.mediaRecorder.start();
+        this.isRecording = true;
+        this.showStatus('🎤 녹음 중...', 'info');
+      } catch (error) {
+        this.showStatus('❌ 마이크 접근 실패: ' + error.message, 'error');
+      }
+    },
+
+    /**
+     * 녹음 중지
+     */
+    stopRecording() {
+      if (this.mediaRecorder && this.isRecording) {
+        this.mediaRecorder.stop();
+        this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        this.isRecording = false;
+        this.showStatus('⏹️ 녹음 완료, 변환 중...', 'info');
+      }
+    },
+
+    /**
+     * 음성을 텍스트로 변환
+     */
+    async transcribeAudio(audioBlob) {
+      try {
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'recording.wav');
+
+        const response = await fetch('http://localhost:8000/api/v1/stt-tts/transcribe', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error('음성 인식 실패');
+        }
+
+        const data = await response.json();
+        this.userInput = data.text;
+        this.showStatus('✅ 음성 인식 완료!', 'success');
+      } catch (error) {
+        this.showStatus('❌ 음성 인식 오류: ' + error.message, 'error');
+      }
+    },
+
+    /**
+     * 말하기 모드 토글
+     */
+    toggleSpeakMode() {
+      this.speakMode = !this.speakMode;
+      this.showStatus(
+        this.speakMode ? '🔊 말하기 모드 ON' : '🔇 말하기 모드 OFF', 
+        'info'
+      );
+    },
+
+    /**
+     * 텍스트를 음성으로 읽어주기
+     */
+    async speakText(text) {
+      try {
+        const response = await fetch('http://localhost:8000/api/v1/stt-tts/synthesize', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            text: text,
+            voice: 'alloy'
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error('음성 합성 실패');
+        }
+
+        const data = await response.json();
+        
+        // hex 문자열을 바이너리로 변환
+        const audioBytes = new Uint8Array(
+          data.audio.match(/.{1,2}/g).map(byte => parseInt(byte, 16))
+        );
+        
+        // 오디오 재생
+        const audioBlob = new Blob([audioBytes], { type: 'audio/mp3' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audio = new Audio(audioUrl);
+        
+        audio.play();
+        
+        // 메모리 정리
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl);
+        };
+        
+      } catch (error) {
+        console.error('TTS 오류:', error);
+        this.showStatus('❌ 음성 합성 오류: ' + error.message, 'error');
+      }
     }
   }
 };
@@ -439,10 +411,21 @@ export default {
 
 /* Header */
 .header {
-  text-align: center;
   color: white;
   margin-bottom: 30px;
   padding-top: 20px;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.title-section {
+  text-align: left;
 }
 
 .header h1 {
@@ -455,6 +438,28 @@ export default {
   font-size: 1.1em;
   opacity: 0.9;
   margin: 0;
+}
+
+.language-selector {
+  display: flex;
+  align-items: center;
+}
+
+.language-dropdown {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  min-width: 120px;
+}
+
+.language-dropdown:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
 }
 
 /* Status Message */
@@ -485,33 +490,19 @@ export default {
   border-left: 4px solid #d32f2f;
 }
 
-/* Container */
-.agent-container {
-  width: 100%;
+/* Chat Container */
+.chat-container {
+  max-width: 1200px;
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: 3fr 1fr;
-  gap: 24px;
-  margin-bottom: 18px;
-}
-
-@media (max-width: 1024px) {
-  .agent-container {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Section */
-.chat-panel,
-.info-panel {
   background: white;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   overflow: hidden;
   animation: fadeIn 0.4s ease-out;
+  margin-bottom: 20px;
 }
 
-.section-header {
+.chat-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -520,15 +511,13 @@ export default {
   color: white;
 }
 
-.section-header h2,
-.section-header h3 {
+.chat-header h2 {
   margin: 0;
   font-size: 1.2em;
   font-weight: 600;
 }
 
-/* Chat Panel */
-.chat-panel {
+.chat-container {
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 220px);
@@ -662,218 +651,7 @@ export default {
   color: #999;
 }
 
-/* Info Panel */
-.info-panel {
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  position: sticky;
-  top: 20px;
-}
 
-.tools-list {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.tool-card {
-  padding: 12px;
-  background: #f5f5f5;
-  border-radius: 6px;
-  border-left: 4px solid #667eea;
-}
-
-.tool-name {
-  font-weight: 600;
-  color: #667eea;
-  margin-bottom: 4px;
-}
-
-.tool-description {
-  font-size: 0.85em;
-  color: #666;
-}
-
-.settings {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.setting-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.setting-item label {
-  font-weight: 600;
-  font-size: 0.9em;
-  color: #333;
-}
-
-.setting-input {
-  padding: 8px;
-  border: 1px solid #e0e0e0;
-  border-radius: 4px;
-  font-size: 0.9em;
-}
-
-.memory-info {
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-  font-weight: 600;
-  color: #667eea;
-}
-
-.quick-questions {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.stats {
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  border-top: 1px solid #e0e0e0;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  background: #f5f5f5;
-  border-radius: 4px;
-}
-
-.stat-label {
-  font-size: 0.9em;
-  color: #666;
-}
-
-.stat-value {
-  font-weight: 700;
-  color: #667eea;
-  font-size: 1.2em;
-}
-
-/* Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.modal {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 600px;
-  max-height: 80vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: slideIn 0.3s ease-out;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.modal-header h2 {
-  margin: 0;
-  font-size: 1.3em;
-}
-
-.close-btn {
-  background: none;
-  border: none;
-  color: white;
-  font-size: 1.5em;
-  cursor: pointer;
-  padding: 0;
-}
-
-.modal-content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.memory-item {
-  padding: 15px;
-  background: #f5f5f5;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.memory-type {
-  font-weight: 700;
-  color: #667eea;
-  margin-bottom: 10px;
-}
-
-.memory-detail {
-  font-size: 0.9em;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.memory-detail small {
-  color: #999;
-}
-
-.memory-field {
-  padding: 8px;
-  background: white;
-  border-radius: 4px;
-  word-break: break-word;
-}
-
-.memory-field strong {
-  color: #667eea;
-}
-
-/* Footer */
-.footer {
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
-  color: white;
-  padding: 20px;
-  font-size: 0.9em;
-}
-
-.footer p {
-  margin: 0 0 15px 0;
-}
 
 /* Button Styles */
 .btn {
@@ -919,6 +697,50 @@ export default {
 
 .btn-outline:hover:not(:disabled) {
   background: #f0f4ff;
+}
+
+.btn-voice {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
+}
+
+.btn-voice:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.6);
+}
+
+.btn-voice.recording {
+  background: linear-gradient(135deg, #dc3545 0%, #e74c3c 100%);
+  animation: pulse 1.5s infinite;
+}
+
+.btn-speak {
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  color: white;
+  box-shadow: 0 4px 15px rgba(255, 193, 7, 0.4);
+}
+
+.btn-speak:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 193, 7, 0.6);
+}
+
+.btn-speak.active {
+  background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+  box-shadow: 0 4px 15px rgba(23, 162, 184, 0.4);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+  }
+  50% {
+    box-shadow: 0 6px 25px rgba(220, 53, 69, 0.8);
+  }
+  100% {
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+  }
 }
 
 .icon {

@@ -6,7 +6,7 @@ Tools-Agent 통합 실제 사용 예제
 # 예제 1: 모든 도구 사용 (기본)
 # ============================================================================
 
-from backend.ai.agents import ReactAgent
+from backend.ai.agent import ReactAgent
 
 def example_1_all_tools():
     """모든 도구를 사용하는 에이전트"""
@@ -203,7 +203,7 @@ def example_6_advanced():
     print("-" * 50)
     
     from backend.ai.tools import get_tool_manager, ToolManager
-    from backend.ai.agents import ReactAgent
+    from backend.ai.agent import ReactAgent
     
     # 1. 특정 도구 제외
     manager = get_tool_manager()

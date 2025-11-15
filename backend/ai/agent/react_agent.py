@@ -16,6 +16,7 @@ from langchain_core.messages import (
 )
 
 from backend.core.config import settings
+from langchain_core.prompts import ChatPromptTemplate
 
 # Tools
 from backend.ai.tools.search.web_search import web_search
@@ -123,17 +124,25 @@ app = workflow.compile()
 # ---------------------------------------------------
 # 6) FastAPI에서 호출하는 메인 함수
 # ---------------------------------------------------
-async def run_react_agent(question: str, session_id: str):
+async def run_react_agent(question: str, session_id: str, language: str = "ko"):
     """
     ◆ session_id 기반 대화 기억 포함
+    ◆ 언어별 번역 지원
     """
-    logger.info(f"🤖 run_react_agent(): session={session_id}, question={question}")
+    logger.info(f"🤖 run_react_agent(): session={session_id}, question={question}, language={language}")
+    
+    # 영어 질문을 한국어로 번역
+    if language == "en":
+        translated_question = await translate_text(question, "ko")
+        logger.info(f"🔄 번역된 질문: {translated_question}")
+    else:
+        translated_question = question
 
     # 기존 memory 불러오기
     history = chat_memory.get(session_id)
 
-    # 이번 질문 추가
-    history.append(HumanMessage(content=question))
+    # 이번 질문 추가 (번역된 질문 사용)
+    history.append(HumanMessage(content=translated_question))
 
     # 초기 상태
     initial_state = {
@@ -151,4 +160,27 @@ async def run_react_agent(question: str, session_id: str):
     # 메모리에 AI 답변도 저장
     chat_memory.add(session_id, final_msg)
 
+    # 영어 요청시 답변을 영어로 번역
+    if language == "en":
+        translated_answer = await translate_text(final_msg.content, "en")
+        return translated_answer
+    
     return final_msg.content
+
+
+async def translate_text(text: str, target_lang: str) -> str:
+    """
+    텍스트를 대상 언어로 번역
+    """
+    try:
+        translate_prompt = ChatPromptTemplate.from_messages([
+            ("system", f"Translate the following text to {'Korean' if target_lang == 'ko' else 'English'}. Only return the translated text, nothing else."),
+            ("human", "{text}")
+        ])
+        
+        chain = translate_prompt | llm
+        result = chain.invoke({"text": text})
+        return result.content
+    except Exception as e:
+        logger.error(f"번역 오류: {e}")
+        return text  # 번역 실패시 원본 반환

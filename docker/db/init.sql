@@ -1,3 +1,1 @@
-
--- Enable pgvector (already present in image, ensure extension)
-CREATE EXTENSION IF NOT EXISTS vector;
+-- PostgreSQL 초기화 완료

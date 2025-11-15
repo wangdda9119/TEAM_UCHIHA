@@ -16,7 +16,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from backend.ai.tools import get_tool_manager, ToolManager
-from backend.ai.agents.react_agent import ReactAgent
+from backend.ai.agent.react_agent import ReactAgent
 from loguru import logger
 
 
