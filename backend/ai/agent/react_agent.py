@@ -1,106 +1,102 @@
-# ========================================
-# LangGraph ReAct Agent - 완전 정상 작동 버전
-# ========================================
+# backend/ai/agent/react_agent.py
 
-from typing import Dict, Any, List, TypedDict
+from typing import List, Any, TypedDict
 
 from loguru import logger
+from langchain_openai import ChatOpenAI
+
 from langgraph.graph import StateGraph
 from langgraph.constants import END
-from langchain_openai import ChatOpenAI
+
 from langchain_core.messages import (
     SystemMessage,
     HumanMessage,
     AIMessage,
-    ToolMessage,
+    ToolMessage
 )
-from langchain_core.tools import BaseTool
 
 from backend.core.config import settings
+
+# Tools
 from backend.ai.tools.search.web_search import web_search
 from backend.ai.tools.search.hyupsung_info import uhs_fetch_info
 from backend.ai.tools.search.rag_search import rag_search
+
 from backend.ai.agent.prompts.system_prompt import SYSTEM_PROMPT
+from backend.ai.memory.chat_memory import chat_memory
 
 
-# ======================================================
-# 1) LLM & Tools 정의
-# ======================================================
+# ---------------------------------------------------
+# 1) LLM 초기화
+# ---------------------------------------------------
 llm = ChatOpenAI(
     api_key=settings.openai_api_key,
     model="gpt-4o",
-    temperature=0.2,
+    temperature=0.2
 )
 
-# 도구 정의
-TOOLS: List[BaseTool] = [web_search, uhs_fetch_info, rag_search]
-TOOL_REGISTRY: Dict[str, BaseTool] = {t.name: t for t in TOOLS}
+# ---------------------------------------------------
+# 2) 도구 목록
+# ---------------------------------------------------
+TOOLS = [web_search, uhs_fetch_info, rag_search]
+TOOL_REGISTRY = {t.name: t for t in TOOLS}
 
 
-# ======================================================
-# 2) LangGraph State Schema
-# ======================================================
+# ---------------------------------------------------
+# 3) LangGraph 상태 정의
+# ---------------------------------------------------
 class AgentState(TypedDict):
     messages: List[Any]
+    session_id: str
 
 
-# ======================================================
-# 3) 노드 함수
-# ======================================================
-
-def call_agent(state: AgentState) -> Dict[str, Any]:
+# ---------------------------------------------------
+# 4) 노드 정의
+# ---------------------------------------------------
+def call_agent(state: AgentState):
     """
     LLM 호출 노드
     """
-    messages = state["messages"]
     llm_with_tools = llm.bind_tools(TOOLS)
+    ai_msg = llm_with_tools.invoke(state["messages"])
 
-    logger.info("🧠 call_agent 실행")
-
-    ai_msg = llm_with_tools.invoke(messages)
-
-    # 메시지 추가 후 반환
-    return {"messages": messages + [ai_msg]}
+    return {
+        "messages": state["messages"] + [ai_msg]
+    }
 
 
-def call_tool(state: AgentState) -> Dict[str, Any]:
+def call_tool(state: AgentState):
     """
     Tool 호출 노드
     """
-    messages = state["messages"]
-    last_msg = messages[-1]
+    last_msg = state["messages"][-1]
 
-    logger.info("🔧 call_tool 실행")
+    tool_call = last_msg.tool_calls[0]
+    tool_name = tool_call["name"]
+    tool_args = tool_call.get("args", {})
+    call_id = tool_call["id"]
 
-    # tool_calls가 없으면 그대로 반환
-    tool_calls = getattr(last_msg, "tool_calls", None)
-    if not tool_calls:
-        logger.warning("⚠️ tool_calls 없음. agent로 복귀.")
-        return {"messages": messages}
-
-    tc = tool_calls[0]
-    tool_name = tc.get("name")
-    tool_args = tc.get("args", {})
-    tool_call_id = tc.get("id")
+    logger.info(f"🔧 Tool 호출: {tool_name}({tool_args})")
 
     tool = TOOL_REGISTRY.get(tool_name)
-    if not tool:
-        observation = f"[ERROR] Unknown tool: {tool_name}"
+    if tool is None:
+        result = f"[ERROR] 존재하지 않는 도구: {tool_name}"
     else:
         try:
-            observation = tool.invoke(tool_args)
+            result = tool.invoke(tool_args)
         except Exception as e:
-            observation = f"[도구 실행 오류] {e}"
+            result = f"[ERROR] 도구 실행 실패: {str(e)}"
 
-    tool_msg = ToolMessage(content=str(observation), tool_call_id=tool_call_id)
+    tool_msg = ToolMessage(content=str(result), tool_call_id=call_id)
 
-    return {"messages": messages + [tool_msg]}
+    return {
+        "messages": state["messages"] + [tool_msg]
+    }
 
 
-# ======================================================
-# 4) Workflow Graph 구성
-# ======================================================
-
+# ---------------------------------------------------
+# 5) Graph 설계
+# ---------------------------------------------------
 workflow = StateGraph(AgentState)
 
 workflow.add_node("agent", call_agent)
@@ -110,44 +106,49 @@ workflow.set_entry_point("agent")
 
 
 def should_continue(state: AgentState):
-    last = state["messages"][-1]
+    last_msg = state["messages"][-1]
 
-    tool_calls = getattr(last, "tool_calls", None)
-
-    if tool_calls:
+    if getattr(last_msg, "tool_calls", None):
         return "tool"
 
-    return END   # 종료
+    return END
 
 
-# agent → tool or end
 workflow.add_conditional_edges("agent", should_continue)
-
-# tool → agent 반복
 workflow.add_edge("tool", "agent")
 
 app = workflow.compile()
 
 
-# ======================================================
-# 5) 최종 실행 함수
-# ======================================================
-async def run_react_agent(question: str, memory=None) -> str:
+# ---------------------------------------------------
+# 6) FastAPI에서 호출하는 메인 함수
+# ---------------------------------------------------
+async def run_react_agent(question: str, session_id: str):
     """
-    FastAPI에서 호출하는 엔트리포인트 함수.
-    memory 인자는 현재 사용하지 않지만 향후 확장을 위해 남겨둠.
+    ◆ session_id 기반 대화 기억 포함
     """
-    logger.info(f"🤖 run_react_agent: {question}")
+    logger.info(f"🤖 run_react_agent(): session={session_id}, question={question}")
 
+    # 기존 memory 불러오기
+    history = chat_memory.get(session_id)
+
+    # 이번 질문 추가
+    history.append(HumanMessage(content=question))
+
+    # 초기 상태
     initial_state = {
         "messages": [
             SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=question),
-        ]
+            *history
+        ],
+        "session_id": session_id
     }
 
     result = app.invoke(initial_state)
 
     final_msg = result["messages"][-1]
+
+    # 메모리에 AI 답변도 저장
+    chat_memory.add(session_id, final_msg)
 
     return final_msg.content
