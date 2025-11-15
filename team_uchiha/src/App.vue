@@ -1,22 +1,19 @@
 <script setup>
-import { ref } from 'vue'
-import AgentInterface from './components/AgentInterface.vue'
-
-const currentView = ref('agent')  // 기본값: agent
+// Router 기반으로 변경
 </script>
 
 <template>
   <div class="app-container">
-    <!-- Views -->
-    <AgentInterface />
+    <!-- 네비게이션 바 -->
+    <nav class="nav-bar">
+      <router-link to="/" class="nav-btn">🏠 홈</router-link>
+      <router-link to="/lecture" class="nav-btn">📚 강의분석</router-link>
+      <router-link to="/agent" class="nav-btn">🤖 에이전트</router-link>
+    </nav>
+
+    <!-- Router View -->
+    <router-view />
   </div>
 </template>
 
-<style scoped>
-.app-container {
-  width: 100%;
-  min-height: 100vh;
-}
-
-
-</style>
+<!-- CSS는 layout.css에서 관리 -->
